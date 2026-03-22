@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" id="themeColor" content="#09090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NexCipher">
+<meta name="description" content="NexCipher — Private Messenger">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>NexCipher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ─────────────────────────────────── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;overflow:hidden;}
+body{height:100%;overflow:hidden;font-family:'Space Grotesk',sans-serif;transition:background .25s;}
+
+/* ─── THEME TOKENS ──────────────────────────── */
+body.dark{
+  --bg:#09090f;--s1:#111118;--s2:#17171f;--s3:#1e1e28;--s4:#252532;
+  --acc:#5b8af0;--acc2:#7aa3f7;--acd:rgba(91,138,240,.13);--acb:rgba(91,138,240,.26);
+  --txt:#f0eeff;--t2:#8e8ca8;--t3:#46445f;
+  --bd:rgba(255,255,255,.06);--bd2:rgba(255,255,255,.03);
+  --ok:#3cc97a;--okd:rgba(60,201,122,.1);--err:#e95b5b;
+  --inp:rgba(255,255,255,.04);
+}
+body.light{
+  --bg:#f3f3f8;--s1:#fff;--s2:#f0f0f7;--s3:#e6e6f2;--s4:#dcdcee;
+  --acc:#3f6eea;--acc2:#2a58d8;--acd:rgba(63,110,234,.08);--acb:rgba(63,110,234,.2);
+  --txt:#0c0c1a;--t2:#5a587a;--t3:#a0a0bc;
+  --bd:rgba(0,0,0,.07);--bd2:rgba(0,0,0,.04);
+  --ok:#1fa35a;--okd:rgba(31,163,90,.08);--err:#cc3d3d;
+  --inp:rgba(0,0,0,.04);
+}
+
+/* ─── APP SHELL ─────────────────────────────── */
+#app{position:fixed;inset:0;background:var(--bg);color:var(--txt);overflow:hidden;}
+
+/* ─── SCREENS ───────────────────────────────── */
+.sc{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  background:var(--bg);opacity:0;pointer-events:none;
+  transform:translateX(8px);transition:opacity .22s ease,transform .22s ease;
+}
+.sc.on{opacity:1;pointer-events:all;transform:translateX(0);}
+.sc.back{transform:translateX(-8px);}
+
+/* ─── STATUS BAR ────────────────────────────── */
+.sb{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 22px 8px;flex-shrink:0;background:var(--s1);
+}
+.sb-time{font-size:13px;font-weight:600;color:var(--txt);font-family:'Inter',sans-serif;}
+.sb-r{display:flex;align-items:center;gap:5px;}
+.sb-sig{display:flex;align-items:flex-end;gap:1.5px;}
+.sb-sig span{background:var(--t3);border-radius:1px;width:3px;}
+.sb-sig span:nth-child(1){height:6px;}
+.sb-sig span:nth-child(2){height:9px;}
+.sb-sig span:nth-child(3){height:12px;}
+.sb-sig span:nth-child(4){height:15px;background:var(--txt);}
+.sb-bat{font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);font-weight:600;}
+
+/* ─── SPLASH ────────────────────────────────── */
+#sc-splash{
+  background:var(--bg);align-items:center;justify-content:center;gap:16px;
+}
+.sp-logo{
+  width:88px;height:88px;background:var(--acd);border:1.5px solid var(--acb);
+  border-radius:28px;display:flex;align-items:center;justify-content:center;
+}
+.sp-name{font-size:36px;font-weight:700;letter-spacing:-1.5px;color:var(--acc);}
+.sp-tag{font-size:11px;letter-spacing:3.5px;text-transform:uppercase;color:var(--t3);font-family:'Inter',sans-serif;}
+.sp-bar{width:48px;height:2.5px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:24px;}
+.sp-fill{height:100%;background:var(--acc);border-radius:2px;animation:spfill 1.8s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes spfill{from{width:0;}to{width:100%;}}
+
+/* ─── AUTH ──────────────────────────────────── */
+#sc-auth{background:var(--bg);}
+.auth-body{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:24px 28px 20px;gap:20px;overflow-y:auto;
+}
+.auth-logo{
+  width:64px;height:64px;background:var(--acd);border:1px solid var(--acb);
+  border-radius:20px;display:flex;align-items:center;justify-content:center;
+}
+.auth-h{font-size:22px;font-weight:700;color:var(--txt);letter-spacing:-.4px;}
+.auth-p{font-size:13px;color:var(--t3);font-family:'Inter',sans-serif;text-align:center;line-height:1.6;margin-top:-12px;}
+
+.bio-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:96px;height:96px;}
+.bio-pulse{
+  position:absolute;inset:-5px;border-radius:50%;
+  border:2px solid var(--acc);opacity:0;
+  animation:biopulse 2.4s ease-in-out infinite;
+}
+@keyframes biopulse{0%{transform:scale(1);opacity:.45;}100%{transform:scale(1.45);opacity:0;}}
+.bio-btn{
+  width:86px;height:86px;border-radius:50%;background:var(--acd);
+  border:2px solid var(--acb);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .2s,transform .15s;
+}
+.bio-btn:active{transform:scale(.94);}
+.bio-hint{font-size:12px;color:var(--t3);font-family:'Inter',sans-serif;margin-top:-12px;text-align:center;}
+
+.div-row{display:flex;align-items:center;gap:10px;width:100%;}
+.div-line{flex:1;height:.5px;background:var(--bd);}
+.div-txt{font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;white-space:nowrap;}
+
+.pin-dots{display:flex;gap:16px;}
+.pdot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--acb);background:transparent;transition:all .18s;}
+.pdot.on{background:var(--acc);border-color:var(--acc);}
+
+.kpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;}
+.kkey{
+  background:var(--s2);border:.5px solid var(--bd);border-radius:15px;
+  padding:17px 0;text-align:center;font-size:22px;font-weight:600;color:var(--txt);
+  cursor:pointer;user-select:none;transition:background .1s,transform .1s;
+  font-family:'Inter',sans-serif;
+}
+.kkey:active{background:var(--s3);transform:scale(.93);}
+.kkey.sm{font-size:13px;font-weight:500;color:var(--t2);}
+
+/* ─── TOP BAR (chat screens) ────────────────── */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px 12px;flex-shrink:0;background:var(--s1);
+  border-bottom:.5px solid var(--bd);
+}
+.topbar-title{font-size:22px;font-weight:700;color:var(--txt);letter-spacing:-.5px;}
+.topbar-acts{display:flex;gap:8px;}
+.ib{
+  width:36px;height:36px;border-radius:11px;background:var(--acd);
+  border:.5px solid var(--acb);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;
+}
+.ib:active{background:var(--s3);}
+
+/* ─── SEARCH ────────────────────────────────── */
+.srch-wrap{padding:10px 14px;background:var(--s1);flex-shrink:0;}
+.srch{
+  width:100%;background:var(--inp);border:.5px solid var(--bd);border-radius:12px;
+  padding:10px 14px;font-size:14px;color:var(--txt);outline:none;
+  font-family:'Space Grotesk',sans-serif;transition:border-color .2s;
+}
+.srch:focus{border-color:var(--acb);}
+.srch::placeholder{color:var(--t3);}
+
+/* ─── CONTACT LIST ──────────────────────────── */
+.clist{flex:1;overflow-y:auto;background:var(--bg);}
+.clist::-webkit-scrollbar{display:none;}
+.ci{
+  display:flex;align-items:center;gap:13px;padding:12px 18px;
+  cursor:pointer;border-bottom:.5px solid var(--bd2);background:var(--s1);
+  transition:background .12s;
+}
+.ci:active{background:var(--s2);}
+.ci-av{
+  width:50px;height:50px;border-radius:50%;flex-shrink:0;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;
+}
+.ci-av .odot{
+  position:absolute;bottom:2px;right:2px;width:12px;height:12px;
+  border-radius:50%;background:var(--ok);border:2.5px solid var(--s1);
+}
+.ci-d{flex:1;min-width:0;}
+.ci-r{display:flex;justify-content:space-between;align-items:baseline;}
+.ci-n{font-size:15px;font-weight:600;color:var(--txt);}
+.ci-t{font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;}
+.ci-p{font-size:13px;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ubadge{
+  background:var(--acc);color:#fff;border-radius:12px;
+  padding:2px 8px;font-size:11px;font-weight:700;flex-shrink:0;
+  font-family:'Inter',sans-serif;
+}
+
+/* ─── WA BANNER ─────────────────────────────── */
+.wa-banner{
+  margin:12px 14px;background:#25d36610;border:.5px solid #25d36630;
+  border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:13px;
+  cursor:pointer;transition:background .15s;
+}
+.wa-banner:active{background:#25d36620;}
+.wa-ico{
+  width:42px;height:42px;border-radius:13px;background:#25D366;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.wa-t{font-size:14px;font-weight:600;color:var(--txt);}
+.wa-s{font-size:12px;color:var(--t3);margin-top:2px;}
+
+/* ─── BOTTOM NAV ────────────────────────────── */
+.bnav{
+  display:flex;background:var(--s1);border-top:.5px solid var(--bd);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));flex-shrink:0;
+}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 0;}
+.ni-lbl{font-size:10px;font-family:'Inter',sans-serif;color:var(--t3);letter-spacing:.3px;}
+.ni.on .ni-lbl{color:var(--acc);}
+
+/* ─── CHAT HEADER ───────────────────────────── */
+.ch-hdr{
+  display:flex;align-items:center;gap:11px;padding:12px 16px 10px;
+  background:var(--s1);border-bottom:.5px solid var(--bd);flex-shrink:0;
+}
+.ch-back{
+  width:34px;height:34px;border-radius:10px;background:var(--s2);
+  border:.5px solid var(--bd);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.ch-av{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;
+}
+.ch-info{flex:1;}
+.ch-name{font-size:15px;font-weight:700;color:var(--txt);}
+.ch-stat{
+  font-size:11px;color:var(--ok);font-family:'Inter',sans-serif;
+  display:flex;align-items:center;gap:5px;
+}
+.ch-stat::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;}
+.ch-mbtn{
+  width:34px;height:34px;border-radius:10px;background:var(--s2);
+  border:.5px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+
+/* ─── MESSAGES ──────────────────────────────── */
+.msgs{flex:1;overflow-y:auto;padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px;}
+.msgs::-webkit-scrollbar{display:none;}
+.day-sep{text-align:center;font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;padding:4px 0;}
+.del-note{
+  align-self:center;background:var(--s2);border-radius:10px;
+  padding:5px 14px;font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;
+}
+.msg{max-width:80%;padding:10px 13px;border-radius:18px;font-size:14px;line-height:1.5;}
+.msg-in{
+  background:var(--s2);border:.5px solid var(--bd);
+  border-bottom-left-radius:4px;color:var(--txt);align-self:flex-start;
+}
+.msg-out{
+  background:var(--acd);border:.5px solid var(--acb);
+  border-bottom-right-radius:4px;color:var(--txt);align-self:flex-end;
+}
+.msg-meta{
+  font-size:10px;color:var(--t3);margin-top:4px;
+  font-family:'Inter',sans-serif;display:flex;align-items:center;gap:3px;
+}
+.msg-out .msg-meta{justify-content:flex-end;}
+.dtag{
+  display:inline-flex;align-items:center;gap:4px;font-size:10px;
+  color:var(--acc);background:var(--acd);border-radius:6px;padding:2px 8px;
+  margin-top:4px;font-family:'Inter',sans-serif;
+}
+
+/* ─── TYPING INDICATOR ──────────────────────── */
+.typing-bubble{
+  background:var(--s2);border:.5px solid var(--bd);border-radius:18px;
+  border-bottom-left-radius:4px;padding:12px 16px;align-self:flex-start;
+  display:flex;gap:5px;align-items:center;
+}
+.typing-bubble span{
+  width:7px;height:7px;border-radius:50%;background:var(--t3);
+  animation:typedot 1.2s infinite;display:inline-block;
+}
+.typing-bubble span:nth-child(2){animation-delay:.2s;}
+.typing-bubble span:nth-child(3){animation-delay:.4s;}
+@keyframes typedot{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(-4px);opacity:1;}}
+
+/* ─── CHAT INPUT ────────────────────────────── */
+.cin-wrap{
+  background:var(--s1);border-top:.5px solid var(--bd);
+  padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+  display:flex;align-items:flex-end;gap:9px;flex-shrink:0;
+}
+.cin-att{
+  width:38px;height:38px;border-radius:50%;background:var(--s2);
+  border:.5px solid var(--bd);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.cin-box{
+  flex:1;background:var(--inp);border:.5px solid var(--bd);border-radius:22px;
+  padding:10px 16px;font-size:14px;color:var(--txt);outline:none;resize:none;
+  min-height:40px;max-height:120px;line-height:1.4;
+  font-family:'Space Grotesk',sans-serif;transition:border-color .2s;
+}
+.cin-box:focus{border-color:var(--acb);}
+.cin-box::placeholder{color:var(--t3);}
+.cin-send{
+  width:42px;height:42px;border-radius:50%;background:var(--acc);border:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:background .15s,transform .1s;
+}
+.cin-send:active{transform:scale(.9);}
+
+/* ─── SETTINGS ──────────────────────────────── */
+.set-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;}
+.set-body::-webkit-scrollbar{display:none;}
+
+.prof-card{
+  background:var(--s1);border:.5px solid var(--bd);border-radius:20px;
+  padding:20px;display:flex;align-items:center;gap:15px;
+}
+.prof-av{
+  width:58px;height:58px;border-radius:50%;background:var(--acd);
+  border:2px solid var(--acb);display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;color:var(--acc);
+}
+.prof-name{font-size:17px;font-weight:700;color:var(--txt);}
+.prof-id{font-size:12px;color:var(--t3);font-family:'Inter',sans-serif;margin-top:3px;}
+.prof-id span{color:var(--acc);}
+
+.sec-lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);font-family:'Inter',sans-serif;padding:0 4px;margin-bottom:6px;}
+.sit{
+  background:var(--s1);border:.5px solid var(--bd);border-radius:14px;
+  padding:13px 14px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;margin-bottom:4px;transition:background .12s;
+}
+.sit:active{background:var(--s2);}
+.sit-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sit-t{flex:1;}
+.sit-l{font-size:14px;font-weight:500;color:var(--txt);}
+.sit-s{font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;margin-top:2px;}
+
+/* ─── TOGGLE ────────────────────────────────── */
+.tog{
+  width:42px;height:24px;border-radius:12px;background:var(--s3);
+  border:.5px solid var(--bd);position:relative;cursor:pointer;flex-shrink:0;
+  transition:background .2s;
+}
+.tog.on{background:var(--acd);border-color:var(--acb);}
+.tog-th{
+  position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:var(--t3);transition:all .2s;
+}
+.tog.on .tog-th{left:21px;background:var(--acc);}
+
+/* ─── THEME SEG ─────────────────────────────── */
+.tseg-wrap{
+  display:flex;gap:5px;background:var(--s2);border-radius:13px;
+  padding:5px;border:.5px solid var(--bd);
+}
+.tseg{
+  flex:1;padding:9px 0;border-radius:10px;border:none;background:transparent;
+  color:var(--t3);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
+  font-family:'Space Grotesk',sans-serif;
+}
+.tseg.on{background:var(--acc);color:#fff;}
+
+/* ─── MODAL BOTTOM SHEET ────────────────────── */
+.modal-bg{
+  position:absolute;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .25s;z-index:200;
+}
+.modal-bg.open{opacity:1;pointer-events:all;}
+.modal-sh{
+  width:100%;background:var(--s1);border-radius:24px 24px 0 0;
+  padding:10px 20px calc(28px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+}
+.modal-bg.open .modal-sh{transform:translateY(0);}
+.sh-handle{width:36px;height:4px;border-radius:2px;background:var(--bd);margin:0 auto 20px;}
+.sh-title{font-size:19px;font-weight:700;color:var(--txt);margin-bottom:5px;}
+.sh-sub{font-size:13px;color:var(--t3);margin-bottom:18px;font-family:'Inter',sans-serif;}
+.inv-box{
+  background:var(--inp);border:1px solid var(--bd);border-radius:16px;
+  padding:18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+.inv-code{font-size:26px;font-weight:700;letter-spacing:5px;color:var(--acc);font-family:'Inter',sans-serif;}
+.copy-btn{
+  background:var(--acd);border:.5px solid var(--acb);border-radius:10px;
+  padding:8px 16px;font-size:13px;font-weight:600;color:var(--acc);cursor:pointer;
+}
+.wa-btn{
+  width:100%;background:#25D366;color:#fff;border:none;border-radius:16px;padding:17px;
+  font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px;font-family:'Space Grotesk',sans-serif;
+  transition:background .15s;
+}
+.wa-btn:active{background:#1aaa55;}
+.sh-opts{display:flex;gap:10px;margin-top:12px;}
+.sh-opt{
+  flex:1;background:var(--s2);border:.5px solid var(--bd);border-radius:13px;
+  padding:13px 0;text-align:center;font-size:12px;font-weight:600;color:var(--t2);
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:background .12s;
+}
+.sh-opt:active{background:var(--s3);}
+.sh-close{
+  width:100%;background:var(--s2);border:none;border-radius:13px;padding:15px;
+  margin-top:10px;font-size:14px;font-weight:600;color:var(--t2);cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+}
+
+/* ─── ABOUT SCREEN ──────────────────────────── */
+#sc-about{background:var(--bg);}
+.about-body{flex:1;overflow-y:auto;padding:24px 20px;}
+.about-hero{display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px 0 32px;}
+.about-logo{
+  width:80px;height:80px;background:var(--acd);border:1.5px solid var(--acb);
+  border-radius:26px;display:flex;align-items:center;justify-content:center;
+}
+.about-name{font-size:28px;font-weight:700;color:var(--acc);letter-spacing:-1px;}
+.about-ver{font-size:12px;color:var(--t3);font-family:'Inter',sans-serif;}
+.about-desc{font-size:14px;color:var(--t2);text-align:center;line-height:1.7;padding:0 10px;}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;}
+.feat-card{
+  background:var(--s1);border:.5px solid var(--bd);border-radius:16px;
+  padding:16px;display:flex;flex-direction:column;gap:8px;
+}
+.feat-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.feat-t{font-size:13px;font-weight:600;color:var(--txt);}
+.feat-s{font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;line-height:1.5;}
+.stack-lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);font-family:'Inter',sans-serif;margin:24px 0 10px;}
+.stack-list{display:flex;flex-wrap:wrap;gap:8px;}
+.stag{
+  padding:6px 13px;background:var(--s2);border:.5px solid var(--bd);
+  border-radius:20px;font-size:12px;font-weight:500;color:var(--t2);
+  font-family:'Inter',sans-serif;
+}
+
+/* ─── NOTIF SCREEN ──────────────────────────── */
+#sc-notif{background:var(--bg);}
+.notif-list{flex:1;overflow-y:auto;}
+.notif-list::-webkit-scrollbar{display:none;}
+.notif-item{
+  display:flex;align-items:flex-start;gap:12px;padding:14px 18px;
+  border-bottom:.5px solid var(--bd2);background:var(--s1);
+  transition:background .12s;cursor:pointer;
+}
+.notif-item:active{background:var(--s2);}
+.notif-item.unread{background:var(--acd);}
+.notif-ico{
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;
+}
+.notif-d{flex:1;}
+.notif-t{font-size:14px;font-weight:600;color:var(--txt);}
+.notif-m{font-size:12px;color:var(--t3);font-family:'Inter',sans-serif;margin-top:2px;}
+.notif-time{font-size:11px;color:var(--t3);font-family:'Inter',sans-serif;flex-shrink:0;}
+
+/* ─── PROFILE EDIT SCREEN ───────────────────── */
+#sc-profile{background:var(--bg);}
+.prof-edit-body{flex:1;overflow-y:auto;padding:20px 18px;}
+.prof-edit-hero{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;}
+.prof-edit-av{
+  width:90px;height:90px;border-radius:50%;background:var(--acd);
+  border:2.5px solid var(--acb);display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:var(--acc);position:relative;cursor:pointer;
+}
+.prof-edit-av-badge{
+  position:absolute;bottom:2px;right:2px;width:26px;height:26px;
+  border-radius:50%;background:var(--acc);border:2px solid var(--s1);
+  display:flex;align-items:center;justify-content:center;
+}
+.field-lbl{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-family:'Inter',sans-serif;margin-bottom:6px;}
+.field-inp{
+  width:100%;background:var(--inp);border:.5px solid var(--bd);border-radius:13px;
+  padding:13px 16px;font-size:15px;color:var(--txt);outline:none;
+  font-family:'Space Grotesk',sans-serif;margin-bottom:16px;transition:border-color .2s;
+}
+.field-inp:focus{border-color:var(--acb);}
+.save-btn{
+  width:100%;background:var(--acc);color:#fff;border:none;border-radius:14px;
+  padding:16px;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;transition:opacity .15s;
+}
+.save-btn:active{opacity:.85;}
+
+/* ─── TOAST ─────────────────────────────────── */
+.toast{
+  position:absolute;bottom:85px;left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:var(--s4);color:var(--txt);padding:10px 22px;
+  border-radius:22px;font-size:13px;font-weight:500;
+  opacity:0;transition:all .28s;pointer-events:none;
+  white-space:nowrap;z-index:300;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ─── CALL MODAL ────────────────────────────── */
+#call-modal{
+  position:absolute;inset:0;background:var(--bg);z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#call-modal.open{opacity:1;pointer-events:all;}
+.call-name{font-size:26px;font-weight:700;color:var(--txt);}
+.call-status{font-size:14px;color:var(--t3);font-family:'Inter',sans-serif;}
+.call-av{
+  width:100px;height:100px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:32px;font-weight:700;border:2.5px solid var(--acb);
+}
+.call-btns{display:flex;gap:24px;margin-top:20px;}
+.call-btn{
+  width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:transform .1s;
+}
+.call-btn:active{transform:scale(.9);}
+.call-end{background:var(--err);}
+.call-mic{background:var(--s2);}
+.call-spk{background:var(--s2);}
+.call-timer{font-size:18px;font-weight:600;color:var(--acc);font-family:'Inter',sans-serif;}
+</style>
+</head>
+<body class="dark">
+<div id="app">
+
+<!-- ═══════════════════════════════════════════
+     SPLASH
+═══════════════════════════════════════════ -->
+<div class="sc on" id="sc-splash">
+  <div class="sp-logo">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <path d="M24 6C24 6 10 13 10 24C10 30 13.5 35 19 37.5L19 42L23 40L24 42L25 40L29 42L29 37.5C34.5 35 38 30 38 24C38 13 24 6 24 6Z" stroke="var(--acc)" stroke-width="2" fill="none"/>
+      <circle cx="18" cy="24" r="2.8" fill="var(--acc)"/>
+      <circle cx="24" cy="24" r="2.8" fill="var(--acc)"/>
+      <circle cx="30" cy="24" r="2.8" fill="var(--acc)"/>
+    </svg>
+  </div>
+  <div class="sp-name">NexCipher</div>
+  <div class="sp-tag">Private Messenger</div>
+  <div class="sp-bar"><div class="sp-fill"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     AUTH
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-auth">
+  <div class="sb"><span class="sb-time" id="t-auth">09:41</span>
+    <div class="sb-r">
+      <div class="sb-sig"><span></span><span></span><span></span><span></span></div>
+      <span class="sb-bat">87%</span>
+    </div>
+  </div>
+  <div class="auth-body">
+    <div class="auth-logo">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M17 4L5 10V19C5 25.6 10.2 31.4 17 33C23.8 31.4 29 25.6 29 19V10L17 4Z" stroke="var(--acc)" stroke-width="1.6" fill="none"/>
+        <path d="M12 17L15.5 20.5L22.5 13.5" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="auth-h">Selamat Datang</div>
+    <div class="auth-p">Verifikasi identitas Anda untuk<br>melanjutkan ke NexCipher</div>
+
+    <div class="bio-wrap">
+      <div class="bio-pulse"></div>
+      <div class="bio-btn" onclick="doBio()" id="bioBtn">
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+          <path d="M19 8C13 8 8 12.5 8 19C8 22.5 9.8 25.8 12.7 28" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M19 8C25 8 30 12.5 30 19C30 22.5 28.2 25.8 25.3 28" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M13.5 19C13.5 15.9 16 13.5 19 13.5C22 13.5 24.5 15.9 24.5 19C24.5 22.1 22.8 25 20 26.5" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M19 19C19 21.5 18 23.5 16.5 25" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="19" cy="19" r="2.5" fill="var(--acc)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="bio-hint" id="bioHint">Sentuh lingkaran untuk biometrik</div>
+
+    <div class="div-row">
+      <div class="div-line"></div>
+      <span class="div-txt">atau masukkan PIN 6 digit</span>
+      <div class="div-line"></div>
+    </div>
+
+    <div class="pin-dots" id="pdots">
+      <div class="pdot" id="pd0"></div><div class="pdot" id="pd1"></div>
+      <div class="pdot" id="pd2"></div><div class="pdot" id="pd3"></div>
+      <div class="pdot" id="pd4"></div><div class="pdot" id="pd5"></div>
+    </div>
+
+    <div class="kpad">
+      <div class="kkey" onclick="kp('1')">1</div><div class="kkey" onclick="kp('2')">2</div><div class="kkey" onclick="kp('3')">3</div>
+      <div class="kkey" onclick="kp('4')">4</div><div class="kkey" onclick="kp('5')">5</div><div class="kkey" onclick="kp('6')">6</div>
+      <div class="kkey" onclick="kp('7')">7</div><div class="kkey" onclick="kp('8')">8</div><div class="kkey" onclick="kp('9')">9</div>
+      <div class="kkey sm" onclick="doBio()">Bio</div>
+      <div class="kkey" onclick="kp('0')">0</div>
+      <div class="kkey sm" onclick="delPin()">&#9003;</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHATS
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-chats">
+  <div class="sb"><span class="sb-time" id="t-chats">09:41</span>
+    <div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div>
+  </div>
+  <div class="topbar">
+    <div class="topbar-title">Pesan</div>
+    <div class="topbar-acts">
+      <div class="ib" onclick="openModal()">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="14" cy="3" r="2" stroke="var(--acc)" stroke-width="1.2"/><circle cx="3" cy="8.5" r="2" stroke="var(--acc)" stroke-width="1.2"/><circle cx="14" cy="14" r="2" stroke="var(--acc)" stroke-width="1.2"/><line x1="4.8" y1="7.6" x2="12.2" y2="3.9" stroke="var(--acc)" stroke-width="1.2"/><line x1="4.8" y1="9.4" x2="12.2" y2="13.1" stroke="var(--acc)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="ib" onclick="go('sc-notif')">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 2C5.5 2 3 4.5 3 7.5V11L2 13H15L14 11V7.5C14 4.5 11.5 2 8.5 2Z" stroke="var(--acc)" stroke-width="1.2" fill="none"/><path d="M6.5 13C6.5 14.1 7.4 15 8.5 15C9.6 15 10.5 14.1 10.5 13" stroke="var(--acc)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="ib" onclick="openNewChat()">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 3V14M3 8.5H14" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="srch-wrap">
+    <input class="srch" placeholder="Cari percakapan atau nama..." oninput="filterChats(this.value)">
+  </div>
+  <div class="wa-banner" onclick="openModal()">
+    <div class="wa-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.5 2 2 6.5 2 12C2 13.9 2.5 15.7 3.5 17.2L2 22L7 20.5C8.5 21.4 10.2 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2Z" fill="white"/><path d="M8.5 9.3C8.5 8.8 9 7.8 9.5 7.8C10 7.8 10.4 8.3 10.6 8.8C10.9 9.6 10.6 10 10.1 10.8C9.6 11.5 10.6 12.5 11.2 13C11.8 13.5 12.8 14.5 13.6 14C14.4 13.5 14.7 13.2 14.9 12.8C15.1 12.4 15.8 12.2 16 12.8C16.3 13.3 17 14.1 17 14.6C17 15.1 15.9 15.7 15.3 16C13.7 16.8 10.5 14.5 9 13C7.5 11.5 7.4 10.3 8.5 9.3Z" fill="#25D366"/></svg>
+    </div>
+    <div style="flex:1"><div class="wa-t">Undang teman via WhatsApp</div><div class="wa-s">Bagikan kode akses eksklusif</div></div>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </div>
+  <div class="clist" id="chatList">
+    <!-- populated by JS -->
+  </div>
+  <div class="bnav" id="bnav-chats">
+    <div class="ni on" onclick="navChats(0)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 11C2 6.6 6 3 11 3C16 3 20 6.6 20 11C20 15.4 16 19 11 19H2L4.5 16.5C3 15 2 13.1 2 11Z" fill="var(--acc)"/></svg>
+      <span class="ni-lbl" style="color:var(--acc)">Pesan</span>
+    </div>
+    <div class="ni" onclick="navChats(1)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" fill="var(--t3)"/><path d="M3 20C3 16.1 6.6 13 11 13s8 3.1 8 7" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="ni-lbl">Kontak</span>
+    </div>
+    <div class="ni" onclick="openModal()">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="16" cy="5" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="5" cy="11" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="16" cy="17" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="10" x2="13.8" y2="6" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="12" x2="13.8" y2="16" stroke="var(--t3)" stroke-width="1.3"/></svg>
+      <span class="ni-lbl">Undang</span>
+    </div>
+    <div class="ni" onclick="navChats(3)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="var(--t3)" stroke-width="1.3"/><path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.2 4.2l1.4 1.4M16.4 16.4l1.4 1.4M4.2 17.8l1.4-1.4M16.4 5.6l1.4-1.4" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span class="ni-lbl">Pengaturan</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAT ROOM
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-chat">
+  <div class="sb"><span class="sb-time" id="t-chat">09:41</span>
+    <div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div>
+  </div>
+  <div class="ch-hdr">
+    <div class="ch-back" onclick="back('sc-chats')">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="ch-av" id="chat-av" style="background:var(--acd);color:var(--acc)">AR</div>
+    <div class="ch-info">
+      <div class="ch-name" id="chat-name">Arinda R.</div>
+      <div class="ch-stat" id="chat-stat">Aktif sekarang</div>
+    </div>
+    <div class="ch-mbtn" onclick="startCall()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2H2C1.4 2 1 2.4 1 3C1 9.6 6.4 15 13 15C13.6 15 14 14.6 14 14V12.2C14 11.7 13.6 11.3 13.2 11.2L10.5 10.7C10 10.6 9.5 10.8 9.2 11.2L8.4 12.2C6.8 11.4 5.6 10.2 4.8 8.6L5.8 7.8C6.2 7.5 6.4 7 6.3 6.5L5.8 3.8C5.7 3.4 5.3 3 4.8 3L4 2Z" stroke="var(--acc)" stroke-width="1.2" fill="none"/></svg>
+    </div>
+    <div class="ch-mbtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.3" fill="var(--t3)"/><circle cx="7" cy="7" r="1.3" fill="var(--t3)"/><circle cx="11.5" cy="7" r="1.3" fill="var(--t3)"/></svg>
+    </div>
+  </div>
+  <div class="msgs" id="msgArea"></div>
+  <div class="cin-wrap">
+    <div class="cin-att" onclick="toast('Lampiran segera hadir')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 7.5L7.5 13.5C5.8 15.2 3.1 15.2 1.4 13.5C-0.3 11.8-0.3 9.1 1.4 7.4L8 0.8C9.1-0.3 10.9-0.3 12 0.8C13.1 1.9 13.1 3.7 12 4.8L5.4 11.4C4.9 11.9 4.1 11.9 3.6 11.4C3.1 10.9 3.1 10.1 3.6 9.6L9.5 3.7" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </div>
+    <textarea class="cin-box" id="msgInp" placeholder="Tulis pesan..." rows="1" onkeydown="sendOnEnter(event)"></textarea>
+    <button class="cin-send" onclick="sendMsg()">
+      <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2.5 8.5L14.5 2.5L8.5 14.5L7.5 9.5L2.5 8.5Z" fill="white"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CONTACTS
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-contacts">
+  <div class="sb"><span class="sb-time" id="t-contacts">09:41</span>
+    <div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div>
+  </div>
+  <div class="topbar">
+    <div class="topbar-title">Kontak</div>
+    <div class="topbar-acts">
+      <div class="ib" onclick="openModal()">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 3V14M3 8.5H14" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="srch-wrap">
+    <input class="srch" placeholder="Cari kontak...">
+  </div>
+  <div class="clist" id="contactList"></div>
+  <div class="bnav">
+    <div class="ni" onclick="navChats(0)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 11C2 6.6 6 3 11 3C16 3 20 6.6 20 11C20 15.4 16 19 11 19H2L4.5 16.5C3 15 2 13.1 2 11Z" fill="var(--t3)"/></svg>
+      <span class="ni-lbl">Pesan</span>
+    </div>
+    <div class="ni on" onclick="navChats(1)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" fill="var(--acc)"/><path d="M3 20C3 16.1 6.6 13 11 13s8 3.1 8 7" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="ni-lbl" style="color:var(--acc)">Kontak</span>
+    </div>
+    <div class="ni" onclick="openModal()">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="16" cy="5" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="5" cy="11" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="16" cy="17" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="10" x2="13.8" y2="6" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="12" x2="13.8" y2="16" stroke="var(--t3)" stroke-width="1.3"/></svg>
+      <span class="ni-lbl">Undang</span>
+    </div>
+    <div class="ni" onclick="navChats(3)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="var(--t3)" stroke-width="1.3"/><path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.2 4.2l1.4 1.4M16.4 16.4l1.4 1.4M4.2 17.8l1.4-1.4M16.4 5.6l1.4-1.4" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span class="ni-lbl">Pengaturan</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SETTINGS
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-settings">
+  <div class="sb"><span class="sb-time" id="t-settings">09:41</span>
+    <div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div>
+  </div>
+  <div class="topbar" style="border-bottom:.5px solid var(--bd)">
+    <div class="topbar-title">Pengaturan</div>
+  </div>
+  <div class="set-body">
+    <div class="prof-card" onclick="go('sc-profile')">
+      <div class="prof-av" id="prof-av-main">RI</div>
+      <div>
+        <div class="prof-name" id="prof-name-main">Rizal I.</div>
+        <div class="prof-id">ID: <span>#NXC-9A2F</span></div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-left:auto"><path d="M5 3L9 7L5 11" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+
+    <div>
+      <div class="sec-lbl">Tampilan</div>
+      <div class="tseg-wrap">
+        <button class="tseg on" id="td" onclick="setTheme('dark')">Gelap</button>
+        <button class="tseg" id="tl" onclick="setTheme('light')">Terang</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-lbl">Privasi &amp; Keamanan</div>
+      <div class="sit"><div class="sit-ico" style="background:var(--okd)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L3 5.5V10C3 13.5 5.6 16.7 9 18C12.4 16.7 15 13.5 15 10V5.5L9 2Z" stroke="var(--ok)" stroke-width="1.2" fill="none"/></svg></div><div class="sit-t"><div class="sit-l">Pesan hilang otomatis</div><div class="sit-s">24 jam setelah terkirim</div></div><div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-th"></div></div></div>
+      <div class="sit"><div class="sit-ico" style="background:var(--acd)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="4" y="8" width="10" height="7" rx="2" stroke="var(--acc)" stroke-width="1.2"/><path d="M6.5 8V6C6.5 4.3 7.6 3 9 3C10.4 3 11.5 4.3 11.5 6V8" stroke="var(--acc)" stroke-width="1.2" stroke-linecap="round"/></svg></div><div class="sit-t"><div class="sit-l">Kunci layar</div><div class="sit-s">PIN 6 digit &amp; biometrik</div></div><div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-th"></div></div></div>
+      <div class="sit"><div class="sit-ico" style="background:var(--s3)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3.5" stroke="var(--t2)" stroke-width="1.2"/><path d="M9 2V4M9 14V16M2 9H4M14 9H16" stroke="var(--t2)" stroke-width="1.2" stroke-linecap="round"/></svg></div><div class="sit-t"><div class="sit-l">Sembunyikan status online</div><div class="sit-s">Tidak ada yang tahu kapan aktif</div></div><div class="tog" onclick="this.classList.toggle('on')"><div class="tog-th"></div></div></div>
+      <div class="sit"><div class="sit-ico" style="background:#e95b5b15"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="2" fill="var(--err)" opacity=".7"/><rect x="10" y="2" width="6" height="6" rx="2" fill="var(--err)" opacity=".4"/><rect x="2" y="10" width="6" height="6" rx="2" fill="var(--err)" opacity=".4"/><rect x="10" y="10" width="6" height="6" rx="2" fill="var(--err)" opacity=".7"/></svg></div><div class="sit-t"><div class="sit-l">Mode kamuflase</div><div class="sit-s">Tampil sebagai kalkulator</div></div><div class="tog" onclick="this.classList.toggle('on')"><div class="tog-th"></div></div></div>
+    </div>
+
+    <div>
+      <div class="sec-lbl">Koneksi</div>
+      <div class="sit" onclick="openModal()"><div class="sit-ico" style="background:#25d36615"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2C5.1 2 2 5.1 2 9C2 10.5 2.5 11.8 3.1 13L2 16L5.1 14.9C6.3 15.6 7.6 16 9 16C12.9 16 16 12.9 16 9C16 5.1 12.9 2 9 2Z" fill="#25D366" opacity=".8"/></svg></div><div class="sit-t"><div class="sit-l">Undang via WhatsApp</div><div class="sit-s">Bagikan kode akses</div></div><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="sit" onclick="go('sc-about')"><div class="sit-ico" style="background:var(--acd)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="var(--acc)" stroke-width="1.2"/><path d="M9 8V13M9 6V6.5" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="sit-t"><div class="sit-l">Tentang NexCipher</div><div class="sit-s">Versi 1.0.0</div></div><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    </div>
+
+    <div>
+      <div class="sec-lbl">Akun</div>
+      <div class="sit"><div class="sit-ico" style="background:var(--s3)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L14 7L7 14H4V11L11 4Z" stroke="var(--t2)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="sit-t"><div class="sit-l">Ubah PIN</div></div><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="sit" onclick="logout()"><div class="sit-ico" style="background:#e95b5b12"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12 10.5L15 7.5M15 7.5L12 4.5M15 7.5H7M7 3H5C4.4 3 4 3.4 4 4V14C4 14.6 4.4 15 5 15H7" stroke="var(--err)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="sit-t"><div class="sit-l" style="color:var(--err)">Keluar</div><div class="sit-s">Hapus sesi dan data lokal</div></div></div>
+    </div>
+  </div>
+  <div class="bnav">
+    <div class="ni" onclick="navChats(0)"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 11C2 6.6 6 3 11 3C16 3 20 6.6 20 11C20 15.4 16 19 11 19H2L4.5 16.5C3 15 2 13.1 2 11Z" fill="var(--t3)"/></svg><span class="ni-lbl">Pesan</span></div>
+    <div class="ni" onclick="navChats(1)"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" fill="var(--t3)"/><path d="M3 20C3 16.1 6.6 13 11 13s8 3.1 8 7" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg><span class="ni-lbl">Kontak</span></div>
+    <div class="ni" onclick="openModal()"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="16" cy="5" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="5" cy="11" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><circle cx="16" cy="17" r="2.5" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="10" x2="13.8" y2="6" stroke="var(--t3)" stroke-width="1.3"/><line x1="7.2" y1="12" x2="13.8" y2="16" stroke="var(--t3)" stroke-width="1.3"/></svg><span class="ni-lbl">Undang</span></div>
+    <div class="ni on" onclick="navChats(3)"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="var(--acc)" stroke-width="1.3"/><path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.2 4.2l1.4 1.4M16.4 16.4l1.4 1.4M4.2 17.8l1.4-1.4M16.4 5.6l1.4-1.4" stroke="var(--acc)" stroke-width="1.3" stroke-linecap="round"/></svg><span class="ni-lbl" style="color:var(--acc)">Pengaturan</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     NOTIFICATIONS
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-notif">
+  <div class="sb"><span class="sb-time" id="t-notif">09:41</span><div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div></div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="ch-back" onclick="back('sc-chats')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="topbar-title">Notifikasi</div>
+    </div>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ABOUT
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-about">
+  <div class="sb"><span class="sb-time">09:41</span><div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div></div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="ch-back" onclick="back('sc-settings')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="topbar-title">Tentang</div>
+    </div>
+  </div>
+  <div class="about-body">
+    <div class="about-hero">
+      <div class="about-logo"><svg width="44" height="44" viewBox="0 0 48 48" fill="none"><path d="M24 6C24 6 10 13 10 24C10 30 13.5 35 19 37.5L19 42L23 40L24 42L25 40L29 42L29 37.5C34.5 35 38 30 38 24C38 13 24 6 24 6Z" stroke="var(--acc)" stroke-width="2" fill="none"/><circle cx="18" cy="24" r="2.8" fill="var(--acc)"/><circle cx="24" cy="24" r="2.8" fill="var(--acc)"/><circle cx="30" cy="24" r="2.8" fill="var(--acc)"/></svg></div>
+      <div class="about-name">NexCipher</div>
+      <div class="about-ver">Versi 1.0.0 &middot; Build 2025.06</div>
+    </div>
+    <div class="about-desc">Aplikasi pesan privat dengan keamanan tingkat lanjut. Dirancang untuk komunikasi yang benar-benar privat tanpa kompromi.</div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-ico" style="background:var(--okd)"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6V11C3 15 6.1 18.6 10 20C13.9 18.6 17 15 17 11V6L10 2Z" stroke="var(--ok)" stroke-width="1.3" fill="none"/></svg></div><div class="feat-t">End-to-End</div><div class="feat-s">Signal Protocol. Server tidak membaca pesan.</div></div>
+      <div class="feat-card"><div class="feat-ico" style="background:var(--acd)"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="var(--acc)" stroke-width="1.3"/><path d="M10 7V10.5L12 12.5" stroke="var(--acc)" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="feat-t">Auto Hapus</div><div class="feat-s">Pesan hilang otomatis dalam 24 jam.</div></div>
+      <div class="feat-card"><div class="feat-ico" style="background:#e95b5b15"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="9" rx="2" stroke="var(--err)" stroke-width="1.3"/><path d="M7 9V6.5C7 5 8.3 3.5 10 3.5C11.7 3.5 13 5 13 6.5V9" stroke="var(--err)" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="feat-t">Zero Storage</div><div class="feat-s">Tidak ada pesan yang disimpan di server.</div></div>
+      <div class="feat-card"><div class="feat-ico" style="background:#25d36615"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#25D366" stroke-width="1.3"/><path d="M6 8.5C6 8 6.5 7 7 7C7.5 7 7.8 7.5 8 8C8.3 8.8 8 9 7.5 9.8C7 10.5 8 11.5 8.5 12C9 12.5 10 13.5 10.8 13C11.5 12.5 11.8 12.2 12 11.8" stroke="#25D366" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="feat-t">WA Invite</div><div class="feat-s">Undang langsung via WhatsApp.</div></div>
+    </div>
+    <div class="stack-lbl">Dibangun dengan</div>
+    <div class="stack-list">
+      <span class="stag">Signal Protocol</span><span class="stag">AES-256</span><span class="stag">TLS 1.3</span>
+      <span class="stag">Node.js</span><span class="stag">Socket.IO</span><span class="stag">PostgreSQL</span>
+      <span class="stag">Redis</span><span class="stag">Docker</span><span class="stag">PWA</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PROFILE EDIT
+═══════════════════════════════════════════ -->
+<div class="sc" id="sc-profile">
+  <div class="sb"><span class="sb-time">09:41</span><div class="sb-r"><div class="sb-sig"><span></span><span></span><span></span><span></span></div><span class="sb-bat">87%</span></div></div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="ch-back" onclick="back('sc-settings')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="topbar-title">Edit Profil</div>
+    </div>
+  </div>
+  <div class="prof-edit-body">
+    <div class="prof-edit-hero">
+      <div class="prof-edit-av" id="edit-av">
+        RI
+        <div class="prof-edit-av-badge"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8 2L11 5L5 11H2V8L8 2Z" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+    <div class="field-lbl">Nama Tampilan</div>
+    <input class="field-inp" id="edit-name" value="Rizal I." placeholder="Nama Anda">
+    <div class="field-lbl">Status</div>
+    <input class="field-inp" id="edit-status" value="Tersedia" placeholder="Status Anda">
+    <div class="field-lbl">ID Pengguna</div>
+    <input class="field-inp" value="#NXC-9A2F" disabled style="opacity:.5;cursor:not-allowed;">
+    <button class="save-btn" onclick="saveProfile()">Simpan Perubahan</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SHARE MODAL
+═══════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-share" onclick="closeMBg(event,'modal-share')">
+  <div class="modal-sh">
+    <div class="sh-handle"></div>
+    <div class="sh-title">Undang ke NexCipher</div>
+    <div class="sh-sub">Bagikan kode ini — hanya pengguna dengan kode yang bisa bergabung</div>
+    <div class="inv-box">
+      <div class="inv-code" id="invCode">NXC-4829</div>
+      <div class="copy-btn" onclick="copyCode()">Salin</div>
+    </div>
+    <button class="wa-btn" onclick="shareWA()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.5 2 2 6.5 2 12C2 13.9 2.5 15.7 3.5 17.2L2 22L7 20.5C8.5 21.4 10.2 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2Z" fill="white"/><path d="M8.5 9.3C8.5 8.8 9 7.8 9.5 7.8C10 7.8 10.4 8.3 10.6 8.8C10.9 9.6 10.6 10 10.1 10.8C9.6 11.5 10.6 12.5 11.2 13C11.8 13.5 12.8 14.5 13.6 14C14.4 13.5 14.7 13.2 14.9 12.8C15.1 12.4 15.8 12.2 16 12.8C16.3 13.3 17 14.1 17 14.6C17 15.1 15.9 15.7 15.3 16C13.7 16.8 10.5 14.5 9 13C7.5 11.5 7.4 10.3 8.5 9.3Z" fill="#25D366"/></svg>
+      Kirim via WhatsApp
+    </button>
+    <div class="sh-opts">
+      <div class="sh-opt" onclick="shareGen()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="13" cy="3" r="2" stroke="var(--t2)" stroke-width="1.2"/><circle cx="3" cy="9" r="2" stroke="var(--t2)" stroke-width="1.2"/><circle cx="13" cy="15" r="2" stroke="var(--t2)" stroke-width="1.2"/><line x1="4.8" y1="8" x2="11.2" y2="4" stroke="var(--t2)" stroke-width="1.2"/><line x1="4.8" y1="10" x2="11.2" y2="14" stroke="var(--t2)" stroke-width="1.2"/></svg>
+        Bagikan
+      </div>
+      <div class="sh-opt" onclick="copyCode()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="5" y="5" width="10" height="10" rx="2" stroke="var(--t2)" stroke-width="1.2"/><path d="M5 13H4C3.4 13 3 12.6 3 12V4C3 3.4 3.4 3 4 3H12C12.6 3 13 3.4 13 4V5" stroke="var(--t2)" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Salin Kode
+      </div>
+      <div class="sh-opt" onclick="generateCode()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 9C14 11.8 11.8 14 9 14C6.2 14 4 11.8 4 9C4 6.2 6.2 4 9 4" stroke="var(--t2)" stroke-width="1.2" stroke-linecap="round"/><path d="M11 2L14 4L11 6" stroke="var(--t2)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Kode Baru
+      </div>
+    </div>
+    <button class="sh-close" onclick="closeModal('modal-share')">Tutup</button>
+  </div>
+</div>
+
+<!-- CALL MODAL -->
+<div id="call-modal">
+  <div class="call-av" id="call-av" style="background:var(--acd);color:var(--acc)">AR</div>
+  <div class="call-name" id="call-name">Arinda R.</div>
+  <div class="call-status" id="call-status">Menghubungi...</div>
+  <div class="call-timer" id="call-timer" style="display:none">00:00</div>
+  <div class="call-btns">
+    <div class="call-btn call-mic" onclick="toggleMic(this)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3C9.3 3 8 4.3 8 6V11C8 12.7 9.3 14 11 14C12.7 14 14 12.7 14 11V6C14 4.3 12.7 3 11 3Z" stroke="var(--txt)" stroke-width="1.4" fill="none"/><path d="M5 11C5 14.3 7.7 17 11 17M11 17C14.3 17 17 14.3 17 11M11 17V20" stroke="var(--txt)" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+    <div class="call-btn call-end" onclick="endCall()">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M20 14.5C19.3 14 18.5 13.6 17.6 13.4C16.7 13.2 15.8 13.3 15 13.7L13 14.8C11.4 14.1 9.9 13 8.7 11.8C7.5 10.6 6.4 9.1 5.7 7.5L6.8 5.5C7.2 4.7 7.3 3.8 7.1 2.9C6.9 2 6.5 1.2 6 0.5C4.8-0.5 3-0.5 2 0.5C1.5 1 1 1.6 0.7 2.3C-0.7 5.6 0.4 10.2 4.2 14C8 17.8 12.6 18.9 15.9 17.5C16.6 17.2 17.2 16.7 17.7 16.2C18.7 15.2 18.7 13.4 17.7 12.4C17.6 12.3 17.5 12.2 17.4 12.1C17.3 12 17.1 11.9 17 11.8" stroke="white" stroke-width="1.4" stroke-linecap="round" fill="none" transform="rotate(135 11 11)"/></svg>
+    </div>
+    <div class="call-btn call-spk" onclick="toggleSpk(this)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 8H2C1.4 8 1 8.4 1 9V13C1 13.6 1.4 14 2 14H4L9 18V4L4 8Z" stroke="var(--txt)" stroke-width="1.4" fill="none"/><path d="M14 8C15.7 9 16.7 10.4 16.7 11.9C16.7 13.4 15.7 14.8 14 15.8" stroke="var(--txt)" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ DATA ═══════════════════════════════════
+const CONTACTS = [
+  {id:1, name:'Arinda R.', init:'AR', bg:'rgba(91,138,240,.15)', color:'var(--acc)', online:true, preview:'Hei, sudah baca dokumennya?', time:'14:22', unread:3},
+  {id:2, name:'Bagas W.', init:'BW', bg:'rgba(60,201,122,.12)', color:'var(--ok)', online:true, preview:'Meeting jam berapa?', time:'12:07', unread:0},
+  {id:3, name:'Dinda M.', init:'DM', bg:'var(--s3)', color:'var(--t2)', online:false, preview:'Oke siap besok ya', time:'Kem.', unread:0},
+  {id:4, name:'Fariz H.', init:'FH', bg:'var(--s3)', color:'var(--t2)', online:false, preview:'Nanti konfirmasi dulu', time:'Sen.', unread:0},
+  {id:5, name:'Nova S.', init:'NS', bg:'rgba(91,138,240,.08)', color:'var(--acc)', online:true, preview:'Done, sudah dikirim', time:'Min.', unread:1},
+];
+
+const NOTIFS = [
+  {name:'Arinda R.', init:'AR', bg:'rgba(91,138,240,.15)', color:'var(--acc)', msg:'Mengirim pesan baru', time:'14:22', unread:true},
+  {name:'Sistem', init:'SY', bg:'var(--acd)', color:'var(--acc)', msg:'Verifikasi biometrik berhasil', time:'09:41', unread:true},
+  {name:'Bagas W.', init:'BW', bg:'rgba(60,201,122,.12)', color:'var(--ok)', msg:'Mengirim pesan baru', time:'12:07', unread:false},
+  {name:'NexCipher', init:'NC', bg:'var(--acd)', color:'var(--acc)', msg:'Kode undangan Anda digunakan', time:'Kem.', unread:false},
+];
+
+const MSG_SAMPLE = [
+  {out:false, txt:'Hei, sudah baca dokumennya?', time:'14:18', del:false},
+  {out:true, txt:'Sudah. Poin ketiga perlu kita diskusi lagi.', time:'14:20', del:true},
+  {out:false, txt:'Betul sekali. Bagian anggaran perlu revisi.', time:'14:21', del:false},
+  {out:true, txt:'Kapan bisa meeting? Besok pagi bisa?', time:'14:22', del:true},
+  {out:false, txt:'Bisa. Jam 10 di kantor ya?', time:'14:22', del:false},
+];
+
+// ═══ STATE ══════════════════════════════════
+let pinVal = '';
+let prevScreen = 'sc-splash';
+let callTimer = null, callSec = 0;
+
+// ═══ INIT ════════════════════════════════════
+window.addEventListener('load', () => {
+  renderChats(); renderContacts(); renderNotifs();
+  updateTime(); setInterval(updateTime, 30000);
+  setTimeout(() => go('sc-auth'), 1900);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+
+// ═══ TIME ════════════════════════════════════
+function updateTime() {
+  const t = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false});
+  document.querySelectorAll('.sb-time').forEach(e => e.textContent = t);
+}
+
+// ═══ SCREEN NAV ══════════════════════════════
+function go(id) {
+  document.querySelectorAll('.sc').forEach(s => {
+    s.classList.remove('on','back');
+    if(s.id === id) s.classList.add('on');
+  });
+  prevScreen = id;
+}
+function back(id) { go(id); }
+
+function navChats(idx) {
+  const scrs = ['sc-chats','sc-contacts','sc-chats','sc-settings'];
+  go(scrs[idx]);
+}
+
+// ═══ AUTH ════════════════════════════════════
+function doBio() {
+  const h = document.getElementById('bioHint');
+  const b = document.getElementById('bioBtn');
+  h.textContent = 'Memindai...';
+  b.style.borderColor = 'var(--ok)';
+  setTimeout(() => {
+    h.textContent = 'Terverifikasi ✓';
+    b.style.borderColor = 'var(--ok)';
+    setTimeout(() => {
+      h.textContent = 'Sentuh lingkaran untuk biometrik';
+      b.style.borderColor = 'var(--acb)';
+      go('sc-chats');
+    }, 700);
+  }, 1400);
+}
+
+function kp(d) {
+  if(pinVal.length >= 6) return;
+  pinVal += d;
+  updDots();
+  if(pinVal.length === 6) setTimeout(() => { go('sc-chats'); setTimeout(()=>{ pinVal=''; updDots(); },300); }, 380);
+}
+function delPin() { pinVal = pinVal.slice(0,-1); updDots(); }
+function updDots() {
+  for(let i=0;i<6;i++) document.getElementById('pd'+i).classList.toggle('on', i < pinVal.length);
+}
+
+// ═══ RENDER CHATS ════════════════════════════
+function renderChats(filter='') {
+  const list = document.getElementById('chatList');
+  const data = CONTACTS.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+  list.innerHTML = data.map(c => `
+    <div class="ci" onclick="openChat(${c.id})">
+      <div class="ci-av" style="background:${c.bg};color:${c.color}">${c.init}${c.online?'<div class="odot"></div>':''}</div>
+      <div class="ci-d">
+        <div class="ci-r"><span class="ci-n">${c.name}</span><span class="ci-t">${c.time}</span></div>
+        <div class="ci-p">${c.preview}</div>
+      </div>
+      ${c.unread ? `<div class="ubadge">${c.unread}</div>` : ''}
+    </div>`).join('');
+}
+function filterChats(v) { renderChats(v); }
+
+// ═══ RENDER CONTACTS ═════════════════════════
+function renderContacts() {
+  const list = document.getElementById('contactList');
+  list.innerHTML = `<div class="wa-banner" onclick="openModal()">
+    <div class="wa-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.5 2 2 6.5 2 12C2 13.9 2.5 15.7 3.5 17.2L2 22L7 20.5C8.5 21.4 10.2 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2Z" fill="white"/><path d="M8.5 9.3C8.5 8.8 9 7.8 9.5 7.8C10 7.8 10.4 8.3 10.6 8.8C10.9 9.6 10.6 10 10.1 10.8C9.6 11.5 10.6 12.5 11.2 13C11.8 13.5 12.8 14.5 13.6 14C14.4 13.5 14.7 13.2 14.9 12.8C15.1 12.4 15.8 12.2 16 12.8C16.3 13.3 17 14.1 17 14.6C17 15.1 15.9 15.7 15.3 16C13.7 16.8 10.5 14.5 9 13C7.5 11.5 7.4 10.3 8.5 9.3Z" fill="#25D366"/></svg></div>
+    <div style="flex:1"><div class="wa-t">Undang via WhatsApp</div><div class="wa-s">Tambah kontak baru dengan kode akses</div></div>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </div>` +
+  CONTACTS.map(c => `
+    <div class="ci" onclick="openChat(${c.id})">
+      <div class="ci-av" style="background:${c.bg};color:${c.color}">${c.init}${c.online?'<div class="odot"></div>':''}</div>
+      <div class="ci-d">
+        <div class="ci-r"><span class="ci-n">${c.name}</span><span class="ci-t">${c.online?'Aktif':'Offline'}</span></div>
+        <div class="ci-p">${c.preview}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══ RENDER NOTIFS ═══════════════════════════
+function renderNotifs() {
+  const list = document.getElementById('notifList');
+  list.innerHTML = NOTIFS.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}">
+      <div class="notif-ico" style="background:${n.bg};color:${n.color}">${n.init}</div>
+      <div class="notif-d"><div class="notif-t">${n.name}</div><div class="notif-m">${n.msg}</div></div>
+      <div class="notif-time">${n.time}</div>
+    </div>`).join('');
+}
+
+// ═══ OPEN CHAT ═══════════════════════════════
+function openChat(id) {
+  const c = CONTACTS.find(x => x.id === id);
+  if(!c) return;
+  document.getElementById('chat-av').textContent = c.init;
+  document.getElementById('chat-av').style.background = c.bg;
+  document.getElementById('chat-av').style.color = c.color;
+  document.getElementById('chat-name').textContent = c.name;
+  document.getElementById('chat-stat').textContent = c.online ? 'Aktif sekarang' : 'Terakhir dilihat kemarin';
+  document.getElementById('call-av').textContent = c.init;
+  document.getElementById('call-av').style.background = c.bg;
+  document.getElementById('call-av').style.color = c.color;
+  document.getElementById('call-name').textContent = c.name;
+  loadMsgs();
+  go('sc-chat');
+}
+
+function openNewChat() { openModal(); }
+
+// ═══ MESSAGES ════════════════════════════════
+function loadMsgs() {
+  const area = document.getElementById('msgArea');
+  const hrs = Math.floor(Math.random()*22)+1;
+  const mins = Math.floor(Math.random()*59)+1;
+  area.innerHTML = `<div class="day-sep">Hari ini</div>
+  <div class="del-note">Pesan dihapus otomatis setelah 24 jam</div>` +
+  MSG_SAMPLE.map(m => `
+    <div class="msg ${m.out?'msg-out':'msg-in'}">
+      ${m.txt}
+      ${m.del?`<div class="dtag">&#9201; Hilang dalam ${hrs}j ${mins}m</div>`:''}
+      <div class="msg-meta">${m.time}${m.out?' &middot; Terkirim':''}</div>
+    </div>`).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+function sendMsg() {
+  const inp = document.getElementById('msgInp');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  const area = document.getElementById('msgArea');
+  const h = Math.floor(Math.random()*22)+1;
+  const m2 = Math.floor(Math.random()*59)+1;
+  const now = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const div = document.createElement('div');
+  div.className = 'msg msg-out';
+  div.innerHTML = txt + `<div class="dtag">&#9201; Hilang dalam ${h}j ${m2}m</div><div class="msg-meta">${now} &middot; Terkirim</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  inp.value = ''; inp.style.height = 'auto';
+  setTimeout(() => simulateReply(area), 1400 + Math.random()*1200);
+}
+
+function simulateReply(area) {
+  const tb = document.createElement('div');
+  tb.className = 'typing-bubble';
+  tb.innerHTML = '<span></span><span></span><span></span>';
+  area.appendChild(tb); area.scrollTop = area.scrollHeight;
+  const replies = ['Oke, siap!','Mengerti, nanti kita bahas lebih lanjut.','Noted. Terima kasih.','Baik, akan saya cek.','Sudah saya baca. Setuju.'];
+  const now = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false});
+  setTimeout(() => {
+    tb.remove();
+    const div = document.createElement('div');
+    div.className = 'msg msg-in';
+    div.innerHTML = replies[Math.floor(Math.random()*replies.length)] + `<div class="msg-meta">${now}</div>`;
+    area.appendChild(div); area.scrollTop = area.scrollHeight;
+  }, 1800 + Math.random()*1000);
+}
+
+function sendOnEnter(e) {
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const inp = document.getElementById('msgInp');
+  if(inp) inp.addEventListener('input',function(){
+    this.style.height='auto';
+    this.style.height=Math.min(this.scrollHeight,120)+'px';
+  });
+});
+
+// ═══ CALL ════════════════════════════════════
+function startCall() {
+  const modal = document.getElementById('call-modal');
+  modal.classList.add('open');
+  document.getElementById('call-status').textContent = 'Menghubungi...';
+  document.getElementById('call-timer').style.display = 'none';
+  setTimeout(() => {
+    document.getElementById('call-status').textContent = 'Terhubung';
+    document.getElementById('call-timer').style.display = 'block';
+    callSec = 0; updateCallTimer();
+    callTimer = setInterval(()=>{ callSec++; updateCallTimer(); }, 1000);
+  }, 2000);
+}
+function updateCallTimer() {
+  const m = Math.floor(callSec/60).toString().padStart(2,'0');
+  const s = (callSec%60).toString().padStart(2,'0');
+  document.getElementById('call-timer').textContent = m+':'+s;
+}
+function endCall() {
+  clearInterval(callTimer); callSec=0;
+  document.getElementById('call-modal').classList.remove('open');
+}
+function toggleMic(el) { el.style.background = el.dataset.muted ? 'var(--s2)' : 'var(--s4)'; el.dataset.muted = el.dataset.muted ? '' : '1'; }
+function toggleSpk(el) { el.style.background = el.dataset.spk ? 'var(--s2)' : 'var(--s4)'; el.dataset.spk = el.dataset.spk ? '' : '1'; }
+
+// ═══ SHARE / INVITE ══════════════════════════
+function openModal() { document.getElementById('modal-share').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeMBg(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+
+function shareWA() {
+  const code = document.getElementById('invCode').textContent;
+  const msg = encodeURIComponent(`Hei! Aku mengundang kamu bergabung ke *NexCipher* — aplikasi pesan privat yang aman.\n\n🔑 Kode aksesmu: *${code}*\n\n📲 Download: https://nexcipher.app\n\nKode ini hanya untukmu. Jangan dibagikan ke orang lain.`);
+  window.open('https://wa.me/?text='+msg,'_blank');
+  closeModal('modal-share');
+}
+function shareGen() {
+  const code = document.getElementById('invCode').textContent;
+  if(navigator.share) {
+    navigator.share({title:'NexCipher — Undangan Bergabung',text:`Bergabunglah ke NexCipher dengan kode: ${code}`,url:'https://nexcipher.app'}).then(()=>closeModal('modal-share'));
+  } else copyCode();
+}
+function copyCode() {
+  const code = document.getElementById('invCode').textContent;
+  navigator.clipboard ? navigator.clipboard.writeText(code).then(()=>toast('Kode disalin!')) : toast('Kode: '+code);
+}
+function generateCode() {
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const c=Array.from({length:7},(_,i)=>i===3?'-':chars[Math.floor(Math.random()*chars.length)]).join('');
+  document.getElementById('invCode').textContent='NXC-'+c.replace('-','');
+  const raw = Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  document.getElementById('invCode').textContent='NXC-'+raw;
+  toast('Kode baru dibuat!');
+}
+
+// ═══ THEME ═══════════════════════════════════
+function setTheme(t) {
+  document.body.className = t;
+  document.getElementById('td').classList.toggle('on',t==='dark');
+  document.getElementById('tl').classList.toggle('on',t==='light');
+  document.getElementById('themeColor').content = t==='dark'?'#09090f':'#f3f3f8';
+}
+
+// ═══ PROFILE SAVE ════════════════════════════
+function saveProfile() {
+  const name = document.getElementById('edit-name').value.trim() || 'Pengguna';
+  document.getElementById('prof-name-main').textContent = name;
+  document.getElementById('prof-av-main').textContent = name.slice(0,2).toUpperCase();
+  document.getElementById('edit-av').textContent = name.slice(0,2).toUpperCase();
+  back('sc-settings'); toast('Profil disimpan!');
+}
+
+// ═══ LOGOUT ══════════════════════════════════
+function logout() { pinVal=''; updDots(); go('sc-auth'); }
+
+// ═══ TOAST ═══════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
